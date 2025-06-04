@@ -1,47 +1,98 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Contador de Cervezas</title>
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap"
     rel="stylesheet"
   />
   <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
     body {
       font-family: 'Inter', sans-serif;
       background: #f9f9f9;
-      padding: 40px;
-      max-width: 800px;
-      margin: auto;
       color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
     }
     h1, h2 {
       text-align: center;
       font-weight: 800;
+      margin-bottom: 20px;
     }
+
+    /* contenedor principal: dos columnas (contenido + comentarios) */
+    #main-container {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      max-width: 1200px;
+    }
+    @media(min-width: 900px) {
+      #main-container {
+        flex-direction: row;
+      }
+    }
+
+    /* columna izquierda: formulario + usuarios + ranking */
+    #left-column {
+      flex: 2;
+      padding-right: 20px;
+    }
+    /* columna derecha: área de comentarios + contador de días */
+    #right-column {
+      flex: 1;
+      margin-top: 40px;
+    }
+    @media(min-width: 900px) {
+      #right-column {
+        margin-top: 0;
+      }
+    }
+
+    /* formulario de nuevo usuario */
     form {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       display: flex;
       flex-direction: column;
       gap: 10px;
       margin-bottom: 30px;
     }
-    input, button {
-      font-size: 1.2rem;
-      padding: 12px;
+    input[type="text"], input[type="file"], textarea {
+      font-size: 1rem;
+      padding: 10px;
       border-radius: 8px;
       border: 1px solid #ccc;
+      width: 100%;
     }
-    button {
+    button, input[type="submit"] {
+      font-size: 1rem;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
       background-color: #4CAF50;
       color: white;
-      border: none;
       cursor: pointer;
-      transition: background 0.3s;
+      transition: background 0.2s ease;
     }
-    button:hover {
+    button:hover, input[type="submit"]:hover {
       background-color: #45a049;
+    }
+
+    /* lista de usuarios */
+    #usuarios {
+      margin-bottom: 40px;
     }
     .usuario {
       background: white;
@@ -51,84 +102,203 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    .usuario img {
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      object-fit: cover;
-      margin-right: 15px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
     .info {
       display: flex;
       align-items: center;
-      font-size: 1.2rem;
+      gap: 15px;
+      font-size: 1rem;
     }
+    .info img {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .botones-usuario > button {
+      font-size: 0.9rem;
+      margin-left: 8px;
+    }
+    .botones-usuario > button.delete {
+      background-color: #f44336;
+    }
+    .botones-usuario > button.delete:hover {
+      background-color: #d32f2f;
+    }
+    .botones-usuario > button.edit-photo {
+      background-color: #2196F3;
+    }
+    .botones-usuario > button.edit-photo:hover {
+      background-color: #1976D2;
+    }
+
+    /* ranking */
     #ranking {
-      margin-top: 40px;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 40px;
     }
     #listaRanking li {
-      font-size: 1.2rem;
+      font-size: 1rem;
       margin-bottom: 8px;
+    }
+
+    /* contador de días del año */
+    #contador-dias {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 40px;
+      text-align: center;
+    }
+    #barra-progreso {
+      width: 100%;
+      height: 20px;
+      background: #e0e0e0;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+    #barra-progreso-inner {
+      height: 100%;
+      background: #4CAF50;
+      width: 0%;
+      transition: width 0.5s ease;
+    }
+
+    /* área de comentarios */
+    #comentarios {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    #form-comentario {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    #form-comentario textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+    .comentario-item {
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+      font-size: 0.95rem;
+    }
+    .comentario-fecha {
+      font-size: 0.8rem;
+      color: #666;
+      margin-bottom: 4px;
     }
   </style>
 </head>
 <body>
   <h1>🍻 Contador de Cervezas</h1>
 
-  <form id="formulario">
-    <input type="text" id="nombre" placeholder="Nombre" required>
-    <input type="file" id="foto" accept="image/*" required>
-    <button type="submit">Agregar Usuario</button>
-  </form>
+  <div id="main-container">
+    <!-- ====================== COLUMNA IZQUIERDA ====================== -->
+    <div id="left-column">
+      <!-- FORMULARIO PARA CREAR USUARIO -->
+      <form id="formulario">
+        <input type="text" id="nombre" placeholder="Nombre" required />
+        <input type="file" id="foto" accept="image/*" required />
+        <input type="submit" value="Agregar Usuario" />
+      </form>
 
-  <div id="usuarios"></div>
+      <!-- LISTA DE USUARIOS -->
+      <div id="usuarios"></div>
 
-  <div id="ranking">
-    <h2>🏆 Ranking</h2>
-    <ol id="listaRanking"></ol>
+      <!-- RANKING -->
+      <div id="ranking">
+        <h2>🏆 Ranking</h2>
+        <ol id="listaRanking"></ol>
+      </div>
+    </div>
+
+    <!-- ====================== COLUMNA DERECHA ====================== -->
+    <div id="right-column">
+      <!-- CONTADOR DE DÍAS RESTANTES DEL AÑO -->
+      <div id="contador-dias">
+        <h2>Días rest. en el año</h2>
+        <div id="texto-dias"></div>
+        <div id="barra-progreso">
+          <div id="barra-progreso-inner"></div>
+        </div>
+      </div>
+
+      <!-- ÁREA DE COMENTARIOS -->
+      <div id="comentarios">
+        <h2>Comentarios</h2>
+        <form id="form-comentario">
+          <textarea id="textoComentario" placeholder="Deja tu comentario..." required></textarea>
+          <button type="submit">Enviar Comentario</button>
+        </form>
+        <div id="listaComentarios"></div>
+      </div>
+    </div>
   </div>
 
-  <!-- 1) Cargamos los SDKs de Firebase -->
+  <!-- ====================== SCRIPTS DE FIREBASE ====================== -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
   <script>
-    // 2) Pega aquí tu propia configuración de Firebase (la que copiaste de la consola)
-    const firebaseConfig = {
-      apiKey: "AIzaSyBxOPl4ocAFXedCy7wMUTzhgecbunemn9o",
-      authDomain: "contadorcervezas.firebaseapp.com",
-      projectId: "contadorcervezas",
-      storageBucket: "contadorcervezas.firebasestorage.app",
-      messagingSenderId: "329742261339",
-      appId: "1:329742261339:web:bf369d88d841ce3df0337e",
-      measurementId: "G-G6P92J0P0Y"
+    // Pega aquí tu configuración de Firebase (la que copiaste desde la consola)
+   
+const firebaseConfig = {
+  apiKey: "AIzaSyBxOPl4ocAFXedCy7wMUTzhgecbunemn9o",
+  authDomain: "contadorcervezas.firebaseapp.com",
+  projectId: "contadorcervezas",
+  storageBucket: "contadorcervezas.firebasestorage.app",
+  messagingSenderId: "329742261339",
+  appId: "1:329742261339:web:bf369d88d841ce3df0337e",
+  measurementId: "G-G6P92J0P0Y"
+
 };
 
-    // 3) Inicializa Firebase
+
+    // Inicializa Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
 
-    // Referencia a la colección "usuarios"
+    // Referencias a colecciones
     const coleccionUsuarios = db.collection('usuarios');
+    const coleccionComentarios = db.collection('comentarios');
 
+    // Elementos del DOM
     const formulario = document.getElementById('formulario');
     const usuariosDiv = document.getElementById('usuarios');
     const listaRanking = document.getElementById('listaRanking');
 
-    // 4) Escuchador en tiempo real para la colección "usuarios"
-    //    Cada vez que cambie algo en Firestore, volvemos a renderizar.
-    let usuarios = [];
-    coleccionUsuarios.orderBy('cervezas', 'desc').onSnapshot(snapshot => {
-      usuarios = [];
-      snapshot.forEach(doc => {
-        usuarios.push({ id: doc.id, ...doc.data() });
-      });
-      renderUsuarios();
-    });
+    const textoDiasDiv = document.getElementById('texto-dias');
+    const barraProgreso = document.getElementById('barra-progreso-inner');
 
-    // 5) Cuando el formulario se envía, guardamos un nuevo usuario en Firestore
+    const formComentario = document.getElementById('form-comentario');
+    const textareaComentario = document.getElementById('textoComentario');
+    const listaComentariosDiv = document.getElementById('listaComentarios');
+
+    // Array local para almacenar temporalmente
+    let usuarios = [];
+    let comentarios = [];
+
+    // ------------ 1) Escuchador de usuarios en tiempo real ------------
+    coleccionUsuarios
+      .orderBy('cervezas', 'desc')
+      .onSnapshot(snapshot => {
+        usuarios = [];
+        snapshot.forEach(doc => {
+          usuarios.push({ id: doc.id, ...doc.data() });
+        });
+        renderUsuarios();
+      });
+
+    // ------------ 2) Agregar usuario al hacer submit ------------
     formulario.addEventListener('submit', e => {
       e.preventDefault();
       const nombreInput = document.getElementById('nombre');
@@ -136,25 +306,23 @@
       const nombre = nombreInput.value.trim();
       if (!nombre || fotoInput.files.length === 0) return;
 
-      // Leemos la imagen como base64 para almacenarla
+      // Leemos la imagen como base64 para guardarla en Firestore
       const reader = new FileReader();
       reader.onload = () => {
         const nuevaData = {
           nombre: nombre,
-          foto: reader.result, // base64
+          foto: reader.result,
           cervezas: 0,
           creadoEn: firebase.firestore.FieldValue.serverTimestamp()
         };
         coleccionUsuarios.add(nuevaData)
-          .then(() => {
-            formulario.reset();
-          })
+          .then(() => formulario.reset())
           .catch(err => console.error("Error al crear usuario:", err));
       };
       reader.readAsDataURL(fotoInput.files[0]);
     });
 
-    // 6) Función para actualizar el contador de cervezas de un usuario
+    // ------------ 3) Función modificar cervezas ------------
     async function modificarCervezas(id, delta) {
       const docRef = coleccionUsuarios.doc(id);
       const doc = await docRef.get();
@@ -165,7 +333,47 @@
         .catch(err => console.error("Error al actualizar cervezas:", err));
     }
 
-    // 7) Renderizamos lista de usuarios + ranking
+    // ------------ 4) Función borrar usuario con confirm ------------
+    function borrarUsuario(id) {
+      if (confirm("¿Seguro que quieres eliminar a este usuario?")) {
+        coleccionUsuarios.doc(id).delete()
+          .catch(err => console.error("Error al borrar usuario:", err));
+      }
+    }
+
+    // ------------ 5) Función editar foto ------------
+    function editarFoto(id) {
+      // Creamos dinámicamente un input file invisible
+      const inputFile = document.createElement('input');
+      inputFile.type = 'file';
+      inputFile.accept = 'image/*';
+      inputFile.style.display = 'none';
+      document.body.appendChild(inputFile);
+
+      inputFile.addEventListener('change', e => {
+        const file = e.target.files[0];
+        if (!file) {
+          document.body.removeChild(inputFile);
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = async () => {
+          try {
+            await coleccionUsuarios.doc(id).update({ foto: reader.result });
+          } catch (err) {
+            console.error("Error al actualizar foto:", err);
+          } finally {
+            document.body.removeChild(inputFile);
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+
+      // Forzamos click en el input para abrir diálogo de archivos
+      inputFile.click();
+    }
+
+    // ------------ 6) Renderizar usuarios + botones añadidos ------------
     function renderUsuarios() {
       usuariosDiv.innerHTML = '';
       usuarios.forEach(u => {
@@ -176,9 +384,11 @@
             <img src="${u.foto}" alt="${u.nombre}">
             <strong>${u.nombre}</strong> — 🍺 ${u.cervezas}
           </div>
-          <div>
+          <div class="botones-usuario">
             <button onclick="modificarCervezas('${u.id}', 1)">+1</button>
             <button onclick="modificarCervezas('${u.id}', -1)" style="background:#f44336">-1</button>
+            <button class="edit-photo" onclick="editarFoto('${u.id}')">Editar Foto</button>
+            <button class="delete" onclick="borrarUsuario('${u.id}')">✖ Borrar</button>
           </div>
         `;
         usuariosDiv.appendChild(div);
@@ -186,13 +396,82 @@
       actualizarRanking();
     }
 
+    // ------------ 7) Renderizar ranking ------------
     function actualizarRanking() {
-      // Como ya tenemos "usuarios" ordenados por Firestore, můtodo onSnapshot nos los entrega ordenados.
+      // Como la consulta está ordenada por 'cervezas desc', simplemente mostramos la lista
       listaRanking.innerHTML = '';
       usuarios.forEach(u => {
         const li = document.createElement('li');
         li.textContent = `${u.nombre} — ${u.cervezas} 🍺`;
         listaRanking.appendChild(li);
+      });
+    }
+
+    // ------------ 8) Contador de días restantes del año ------------
+    function actualizarContadorDias() {
+      const hoy = new Date();
+      const año = hoy.getFullYear();
+      const inicioAño = new Date(año, 0, 1);
+      const finAño = new Date(año, 11, 31, 23, 59, 59);
+      const unDiaMs = 1000 * 60 * 60 * 24;
+
+      const diaActual = Math.floor((hoy - inicioAño) / unDiaMs) + 1;
+      const totalDias = Math.floor((finAño - inicioAño) / unDiaMs) + 1;
+      const diasRestantes = totalDias - diaActual;
+
+      textoDiasDiv.textContent = `${diasRestantes} días restantes de ${totalDias}`;
+      const porcentajePasado = (diaActual / totalDias) * 100;
+      barraProgreso.style.width = `${porcentajePasado}%`;
+    }
+    // Llamamos al inicio y cada vez que recargue la página
+    actualizarContadorDias();
+
+    // ------------ 9) Comentarios (colección "comentarios") ------------
+
+    // Escuchador en tiempo real de comentarios ordenados por fecha ascendente
+    coleccionComentarios
+      .orderBy('fecha', 'asc')
+      .onSnapshot(snapshot => {
+        comentarios = [];
+        snapshot.forEach(doc => {
+          comentarios.push({ id: doc.id, ...doc.data() });
+        });
+        renderComentarios();
+      });
+
+    // Al enviar un comentario, lo guardamos en Firestore
+    formComentario.addEventListener('submit', e => {
+      e.preventDefault();
+      const texto = textareaComentario.value.trim();
+      if (!texto) return;
+      const nuevoComentario = {
+        texto: texto,
+        fecha: firebase.firestore.FieldValue.serverTimestamp()
+      };
+      coleccionComentarios.add(nuevoComentario)
+        .then(() => {
+          textareaComentario.value = '';
+        })
+        .catch(err => console.error("Error al guardar comentario:", err));
+    });
+
+    // Renderiza la lista de comentarios
+    function renderComentarios() {
+      listaComentariosDiv.innerHTML = '';
+      comentarios.forEach(c => {
+        const div = document.createElement('div');
+        div.className = 'comentario-item';
+        // Convertir timestamp a fecha legible
+        let fechaTexto = '';
+        if (c.fecha && c.fecha.toDate) {
+          const d = c.fecha.toDate();
+          fechaTexto = d.toLocaleString();
+        }
+        div.innerHTML = `
+          <div class="comentario-fecha">${fechaTexto}</div>
+          <div>${c.texto}</div>
+        `;
+        listaComentariosDiv.appendChild(div);
       });
     }
   </script>
