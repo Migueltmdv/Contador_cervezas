@@ -4,7 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Contador de Cervezas</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap"
+    rel="stylesheet"
+  />
   <style>
     body {
       font-family: 'Inter', sans-serif;
@@ -87,77 +90,82 @@
     <ol id="listaRanking"></ol>
   </div>
 
+  <!-- 1) Cargamos los SDKs de Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
   <script>
+    // 2) Pega aquí tu propia configuración de Firebase (la que copiaste de la consola)
+    const firebaseConfig = {
+      apiKey: "AIzaSyBxOPl4ocAFXedCy7wMUTzhgecbunemn9o",
+      authDomain: "contadorcervezas.firebaseapp.com",
+      projectId: "contadorcervezas",
+      storageBucket: "contadorcervezas.firebasestorage.app",
+      messagingSenderId: "329742261339",
+      appId: "1:329742261339:web:bf369d88d841ce3df0337e",
+      measurementId: "G-G6P92J0P0Y"
+};
+
+    // 3) Inicializa Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // Referencia a la colección "usuarios"
+    const coleccionUsuarios = db.collection('usuarios');
+
     const formulario = document.getElementById('formulario');
     const usuariosDiv = document.getElementById('usuarios');
     const listaRanking = document.getElementById('listaRanking');
 
+    // 4) Escuchador en tiempo real para la colección "usuarios"
+    //    Cada vez que cambie algo en Firestore, volvemos a renderizar.
     let usuarios = [];
-
-    async function cargarDatos() {
-      try {
-        const res = await fetch('https://contador-cervezas-json.onrender.com/usuarios');
-        usuarios = await res.json();
-        renderUsuarios();
-      } catch (e) {
-        console.error('Error al cargar datos:', e);
-      }
-    }
-
-    async function guardarUsuario(usuario) {
-      try {
-        await fetch('https://contador-cervezas-json.onrender.com/usuarios', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(usuario)
-        });
-      } catch (e) {
-        console.error('Error al guardar usuario:', e);
-      }
-    }
-
-    async function actualizarUsuario(usuario) {
-      try {
-        await fetch(`https://contador-cervezas-json.onrender.com/usuarios/${usuario.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(usuario)
-        });
-      } catch (e) {
-        console.error('Error al actualizar usuario:', e);
-      }
-    }
-
-    formulario.addEventListener('submit', async e => {
-      e.preventDefault();
-      const nombre = document.getElementById('nombre').value.trim();
-      const fotoInput = document.getElementById('foto');
-      if (!fotoInput.files.length || !nombre) return;
-      const reader = new FileReader();
-      reader.onload = async () => {
-        const nuevoUsuario = {
-          id: Date.now(),
-          nombre,
-          foto: reader.result,
-          cervezas: 0
-        };
-        usuarios.push(nuevoUsuario);
-        await guardarUsuario(nuevoUsuario);
-        renderUsuarios();
-      };
-      reader.readAsDataURL(fotoInput.files[0]);
-      formulario.reset();
+    coleccionUsuarios.orderBy('cervezas', 'desc').onSnapshot(snapshot => {
+      usuarios = [];
+      snapshot.forEach(doc => {
+        usuarios.push({ id: doc.id, ...doc.data() });
+      });
+      renderUsuarios();
     });
 
+    // 5) Cuando el formulario se envía, guardamos un nuevo usuario en Firestore
+    formulario.addEventListener('submit', e => {
+      e.preventDefault();
+      const nombreInput = document.getElementById('nombre');
+      const fotoInput = document.getElementById('foto');
+      const nombre = nombreInput.value.trim();
+      if (!nombre || fotoInput.files.length === 0) return;
+
+      // Leemos la imagen como base64 para almacenarla
+      const reader = new FileReader();
+      reader.onload = () => {
+        const nuevaData = {
+          nombre: nombre,
+          foto: reader.result, // base64
+          cervezas: 0,
+          creadoEn: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        coleccionUsuarios.add(nuevaData)
+          .then(() => {
+            formulario.reset();
+          })
+          .catch(err => console.error("Error al crear usuario:", err));
+      };
+      reader.readAsDataURL(fotoInput.files[0]);
+    });
+
+    // 6) Función para actualizar el contador de cervezas de un usuario
     async function modificarCervezas(id, delta) {
-      const usuario = usuarios.find(u => u.id === id);
-      if (!usuario) return;
-      usuario.cervezas += delta;
-      if (usuario.cervezas < 0) usuario.cervezas = 0;
-      await actualizarUsuario(usuario);
-      renderUsuarios();
+      const docRef = coleccionUsuarios.doc(id);
+      const doc = await docRef.get();
+      if (!doc.exists) return;
+      let { cervezas } = doc.data();
+      cervezas = Math.max(0, cervezas + delta);
+      docRef.update({ cervezas })
+        .catch(err => console.error("Error al actualizar cervezas:", err));
     }
 
+    // 7) Renderizamos lista de usuarios + ranking
     function renderUsuarios() {
       usuariosDiv.innerHTML = '';
       usuarios.forEach(u => {
@@ -169,8 +177,8 @@
             <strong>${u.nombre}</strong> — 🍺 ${u.cervezas}
           </div>
           <div>
-            <button onclick="modificarCervezas(${u.id}, 1)">+1</button>
-            <button onclick="modificarCervezas(${u.id}, -1)" style="background:#f44336">-1</button>
+            <button onclick="modificarCervezas('${u.id}', 1)">+1</button>
+            <button onclick="modificarCervezas('${u.id}', -1)" style="background:#f44336">-1</button>
           </div>
         `;
         usuariosDiv.appendChild(div);
@@ -179,16 +187,14 @@
     }
 
     function actualizarRanking() {
-      const ordenados = [...usuarios].sort((a, b) => b.cervezas - a.cervezas);
+      // Como ya tenemos "usuarios" ordenados por Firestore, můtodo onSnapshot nos los entrega ordenados.
       listaRanking.innerHTML = '';
-      ordenados.forEach(u => {
+      usuarios.forEach(u => {
         const li = document.createElement('li');
         li.textContent = `${u.nombre} — ${u.cervezas} 🍺`;
         listaRanking.appendChild(li);
       });
     }
-
-    cargarDatos();
   </script>
 </body>
 </html>
