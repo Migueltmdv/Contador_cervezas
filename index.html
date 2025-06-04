@@ -6,72 +6,53 @@
   <title>Contador de Cervezas</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Inter', sans-serif;
-    }
     body {
-      background: linear-gradient(to bottom, #fceabb, #f8b500);
+      font-family: 'Inter', sans-serif;
+      background: #f9f9f9;
+      padding: 40px;
+      max-width: 800px;
+      margin: auto;
       color: #333;
-      padding: 40px 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
     }
-    h1 {
-      font-size: 3rem;
-      margin-bottom: 30px;
-      color: #222;
+    h1, h2 {
+      text-align: center;
+      font-weight: 800;
     }
     form {
       display: flex;
-      gap: 20px;
-      flex-wrap: wrap;
-      background: white;
-      padding: 20px;
-      border-radius: 20px;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-      margin-bottom: 40px;
-      width: 100%;
-      max-width: 700px;
-      justify-content: center;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 30px;
     }
-    input[type="text"], input[type="file"] {
+    input, button {
       font-size: 1.2rem;
-      padding: 10px;
-      border: 2px solid #ccc;
-      border-radius: 12px;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
     }
-    button[type="submit"] {
-      font-size: 1.2rem;
-      background: #ff9800;
+    button {
+      background-color: #4CAF50;
       color: white;
       border: none;
-      border-radius: 12px;
-      padding: 10px 20px;
       cursor: pointer;
-      transition: background 0.3s ease;
+      transition: background 0.3s;
     }
-    button[type="submit"]:hover {
-      background: #fb8c00;
+    button:hover {
+      background-color: #45a049;
     }
     .usuario {
       background: white;
-      padding: 20px;
-      margin: 10px 0;
-      border-radius: 16px;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-      width: 100%;
-      max-width: 700px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
     .usuario img {
-      width: 70px;
-      height: 70px;
+      width: 60px;
+      height: 60px;
       border-radius: 50%;
       object-fit: cover;
       margin-right: 15px;
@@ -79,38 +60,14 @@
     .info {
       display: flex;
       align-items: center;
-      font-size: 1.5rem;
-    }
-    .usuario button {
       font-size: 1.2rem;
-      padding: 10px;
-      border: none;
-      border-radius: 10px;
-      background: #4caf50;
-      color: white;
-      margin-left: 10px;
-      cursor: pointer;
-      transition: transform 0.2s;
-    }
-    .usuario button:hover {
-      transform: scale(1.1);
     }
     #ranking {
-      margin-top: 50px;
-      width: 100%;
-      max-width: 700px;
-      background: white;
-      padding: 20px;
-      border-radius: 20px;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    }
-    #ranking h2 {
-      font-size: 2rem;
-      margin-bottom: 20px;
+      margin-top: 40px;
     }
     #listaRanking li {
-      font-size: 1.4rem;
-      margin: 10px 0;
+      font-size: 1.2rem;
+      margin-bottom: 8px;
     }
   </style>
 </head>
@@ -137,24 +94,67 @@
 
     let usuarios = [];
 
-    formulario.addEventListener('submit', e => {
+    async function cargarDatos() {
+      try {
+        const res = await fetch('https://contador-cervezas-json.onrender.com/usuarios');
+        usuarios = await res.json();
+        renderUsuarios();
+      } catch (e) {
+        console.error('Error al cargar datos:', e);
+      }
+    }
+
+    async function guardarUsuario(usuario) {
+      try {
+        await fetch('https://contador-cervezas-json.onrender.com/usuarios', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(usuario)
+        });
+      } catch (e) {
+        console.error('Error al guardar usuario:', e);
+      }
+    }
+
+    async function actualizarUsuario(usuario) {
+      try {
+        await fetch(`https://contador-cervezas-json.onrender.com/usuarios/${usuario.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(usuario)
+        });
+      } catch (e) {
+        console.error('Error al actualizar usuario:', e);
+      }
+    }
+
+    formulario.addEventListener('submit', async e => {
       e.preventDefault();
       const nombre = document.getElementById('nombre').value.trim();
       const fotoInput = document.getElementById('foto');
       if (!fotoInput.files.length || !nombre) return;
-      const foto = URL.createObjectURL(fotoInput.files[0]);
-
-      const nuevoUsuario = { id: Date.now(), nombre, foto, cervezas: 0 };
-      usuarios.push(nuevoUsuario);
-      renderUsuarios();
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const nuevoUsuario = {
+          id: Date.now(),
+          nombre,
+          foto: reader.result,
+          cervezas: 0
+        };
+        usuarios.push(nuevoUsuario);
+        await guardarUsuario(nuevoUsuario);
+        renderUsuarios();
+      };
+      reader.readAsDataURL(fotoInput.files[0]);
       formulario.reset();
     });
 
-    function modificarCervezas(id, delta) {
+    async function modificarCervezas(id, delta) {
       const usuario = usuarios.find(u => u.id === id);
       if (!usuario) return;
       usuario.cervezas += delta;
       if (usuario.cervezas < 0) usuario.cervezas = 0;
+      await actualizarUsuario(usuario);
       renderUsuarios();
     }
 
@@ -187,6 +187,8 @@
         listaRanking.appendChild(li);
       });
     }
+
+    cargarDatos();
   </script>
 </body>
 </html>
